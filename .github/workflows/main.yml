@@ -18,20 +18,24 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'maven'
 
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      - name: Authenticate Snyk CLI
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk auth $SNYK_TOKEN
+
+      - name: Resolve Maven dependencies
+        run: mvn dependency:tree -DskipTests
 
       - name: Snyk test Java dependencies
-        run: snyk test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --severity-threshold=high -d
 
       - name: Generate Snyk JSON Report
         if: always()
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           snyk test --json > snyk-report.json || echo "Falló snyk test, pero se continúa"
 
